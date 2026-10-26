@@ -1,0 +1,45 @@
+name: Meowlix Server Auto-Renew
+
+on:
+  schedule:
+    # 建议每2天运行一次巡检（检测到进入可续期窗口时立即自动续期，避免8天刚性间隔因延迟错过）
+    - cron: '0 2 */2 * *'
+  workflow_dispatch: # 支持在 GitHub 后台随时手动一键运行
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # 安装 Playwright 浏览器环境用于网页真实截图
+          playwright install --with-deps chromium
+
+      - name: Run Auto-Renew Script
+        env:
+          MEOWLIX_URL: "https://freegp.meowlix.cc"
+          MEOWLIX_API_KEY: ${{ secrets.MEOWLIX_API_KEY }}
+          MEOWLIX_COOKIES: ${{ secrets.MEOWLIX_COOKIES }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: |
+          python main.py
+
+      - name: Upload Screenshot Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renew-screenshot
+          path: screenshot.png
+          retention-days: 7
