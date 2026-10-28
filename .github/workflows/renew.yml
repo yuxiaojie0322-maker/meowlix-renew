@@ -2,8 +2,8 @@ name: Meowlix Multi-Account Auto-Renew
 
 on:
   schedule:
-    # 建议每2天运行一次巡检（进入可续期窗口时自动续期，避免错过）
-    - cron: '0 2 */2 * *'
+    # 每天北京时间 10:00 (UTC 02:00) 自动巡检一次
+    - cron: '0 2 * * *'
   workflow_dispatch: # 支持在 GitHub 后台随时手动一键运行
 
 jobs:
