@@ -1,8 +1,8 @@
-name: Meowlix Server Auto-Renew
+name: Meowlix Multi-Account Auto-Renew
 
 on:
   schedule:
-    # 建议每2天运行一次巡检（检测到进入可续期窗口时立即自动续期，避免8天刚性间隔因延迟错过）
+    # 建议每2天运行一次巡检（进入可续期窗口时自动续期，避免错过）
     - cron: '0 2 */2 * *'
   workflow_dispatch: # 支持在 GitHub 后台随时手动一键运行
 
@@ -10,33 +10,52 @@ jobs:
   renew:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: 检出当前仓库
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 检出私有核心仓库
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/my-private-scripts
+          path: private-scripts
+          token: ${{ secrets.CORE_SCRIPT_TOKEN || secrets.REPO_TOKEN || secrets.GH_PAT_PRIVATE_REPO }}
+
+      - name: 设置 Python 环境
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Dependencies
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # 安装 Playwright 浏览器环境用于网页真实截图
-          playwright install --with-deps chromium
+          pip install -r private-scripts/meowlix/requirements.txt
 
-      - name: Run Auto-Renew Script
+      - name: 执行多账号自动续期
         env:
+          ALL_SECRETS: ${{ toJson(secrets) }}
           MEOWLIX_URL: "https://freegp.meowlix.cc"
-          MEOWLIX_API_KEY: ${{ secrets.MEOWLIX_API_KEY }}
-          MEOWLIX_COOKIES: ${{ secrets.MEOWLIX_COOKIES }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          # 独立账号变量支持（1~10，支持自定义备注或账号名）
+          MEOWLIX_ACCOUNT_1: ${{ secrets.MEOWLIX_ACCOUNT_1 }}
+          MEOWLIX_ACCOUNT_2: ${{ secrets.MEOWLIX_ACCOUNT_2 }}
+          MEOWLIX_ACCOUNT_3: ${{ secrets.MEOWLIX_ACCOUNT_3 }}
+          MEOWLIX_ACCOUNT_4: ${{ secrets.MEOWLIX_ACCOUNT_4 }}
+          MEOWLIX_ACCOUNT_5: ${{ secrets.MEOWLIX_ACCOUNT_5 }}
+          MEOWLIX_ACCOUNT_6: ${{ secrets.MEOWLIX_ACCOUNT_6 }}
+          MEOWLIX_ACCOUNT_7: ${{ secrets.MEOWLIX_ACCOUNT_7 }}
+          MEOWLIX_ACCOUNT_8: ${{ secrets.MEOWLIX_ACCOUNT_8 }}
+          MEOWLIX_ACCOUNT_9: ${{ secrets.MEOWLIX_ACCOUNT_9 }}
+          MEOWLIX_ACCOUNT_10: ${{ secrets.MEOWLIX_ACCOUNT_10 }}
+          # 兼容：多行总变量 MEOWLIX_ACCOUNTS 或 原单账号 MEOWLIX_API_KEY
+          MEOWLIX_ACCOUNTS: ${{ secrets.MEOWLIX_ACCOUNTS }}
+          MEOWLIX_API_KEY: ${{ secrets.MEOWLIX_API_KEY }}
+          MEOWLIX_COOKIES: ${{ secrets.MEOWLIX_COOKIES }}
         run: |
-          python main.py
+          python private-scripts/meowlix/main.py
 
-      - name: Upload Screenshot Artifact
+      - name: 上传状态卡片图片
         if: always()
         uses: actions/upload-artifact@v4
         with:
