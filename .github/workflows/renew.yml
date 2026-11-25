@@ -1,0 +1,62 @@
+name: Meowlix 自动续期
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 每天北京时间 06:00 自动运行
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 检出私有核心仓库
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/my-private-scripts
+          path: private-scripts
+          token: ${{ secrets.CORE_SCRIPT_TOKEN || secrets.REPO_TOKEN || secrets.GH_PAT_PRIVATE_REPO }}
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: private-scripts/meowlix/requirements.txt
+
+      - name: 安装依赖
+        run: pip install -r private-scripts/meowlix/requirements.txt
+
+      - name: 执行 Meowlix 自动续期
+        env:
+          ALL_SECRETS: ${{ toJson(secrets) }}
+          MEOWLIX_URL: ${{ vars.MEOWLIX_URL || secrets.MEOWLIX_URL || 'https://freegp.meowlix.cc' }}
+        run: python -u private-scripts/meowlix/main.py
+
+      - name: 上传状态卡片截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meowlix-status-card
+          path: screenshot.png
+          if-no-files-found: ignore
+
+      - name: 清理旧的工作流运行记录 (仅保留最新2条)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          runs=$(gh run list --repo "${{ github.repository }}" --workflow="Meowlix 自动续期" --limit=50 --json databaseId --jq '.[].databaseId')
+          count=0
+          for run_id in $runs; do
+            count=$((count + 1))
+            if [ $count -gt 2 ]; then
+              echo "删除旧记录: $run_id"
+              gh run delete $run_id --repo "${{ github.repository }}" || true
+            fi
+          done
