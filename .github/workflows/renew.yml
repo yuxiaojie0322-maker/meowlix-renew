@@ -46,17 +46,13 @@ jobs:
           path: screenshot.png
           if-no-files-found: ignore
 
-      - name: 清理旧的工作流运行记录 (仅保留最新2条)
+      - name: 清理所有工作流运行记录 (一条都不保留)
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          runs=$(gh run list --repo "${{ github.repository }}" --workflow="Meowlix 自动续期" --limit=50 --json databaseId --jq '.[].databaseId')
-          count=0
+          runs=$(gh run list --repo "${{ github.repository }}" --workflow="Meowlix 自动续期" --limit=100 --json databaseId --jq '.[].databaseId')
           for run_id in $runs; do
-            count=$((count + 1))
-            if [ $count -gt 2 ]; then
-              echo "删除旧记录: $run_id"
-              gh run delete $run_id --repo "${{ github.repository }}" || true
-            fi
+            echo "删除记录: $run_id"
+            gh run delete $run_id --repo "${{ github.repository }}" || true
           done
