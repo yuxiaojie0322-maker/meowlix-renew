@@ -34,7 +34,12 @@ jobs:
 
       - name: 执行 Meowlix 自动续期
         env:
-          ALL_SECRETS: ${{ toJson(secrets) }}
+          MEOWLIX_ACCOUNT_1: ${{ secrets.MEOWLIX_ACCOUNT_1 }}
+          MEOWLIX_ACCOUNT_2: ${{ secrets.MEOWLIX_ACCOUNT_2 }}
+          MEOWLIX_ACCOUNT_3: ${{ secrets.MEOWLIX_ACCOUNT_3 }}
+          MEOWLIX_ACCOUNT_4: ${{ secrets.MEOWLIX_ACCOUNT_4 }}
+          MEOWLIX_ACCOUNT_5: ${{ secrets.MEOWLIX_ACCOUNT_5 }}
+          MEOWLIX_ACCOUNTS: ${{ secrets.MEOWLIX_ACCOUNTS }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           MEOWLIX_URL: ${{ vars.MEOWLIX_URL || secrets.MEOWLIX_URL || 'https://freegp.meowlix.cc' }}
