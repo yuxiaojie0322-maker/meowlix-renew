@@ -35,6 +35,8 @@ jobs:
       - name: 执行 Meowlix 自动续期
         env:
           ALL_SECRETS: ${{ toJson(secrets) }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           MEOWLIX_URL: ${{ vars.MEOWLIX_URL || secrets.MEOWLIX_URL || 'https://freegp.meowlix.cc' }}
         run: python -u private-scripts/meowlix/main.py
 
